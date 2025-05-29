@@ -1,11 +1,16 @@
+
 import MarketStats from "@/components/MarketStats";
 import CryptoChart from "@/components/CryptoChart";
 import PortfolioCard from "@/components/PortfolioCard";
 import CryptoList from "@/components/CryptoList";
+import ThemeToggle from "@/components/ThemeToggle";
+import Attribution from "@/components/Attribution";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background p-8">
+      <ThemeToggle />
+      <Attribution />
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Crypto Dashboard</h1>
