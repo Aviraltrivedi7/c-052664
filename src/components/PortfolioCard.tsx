@@ -1,11 +1,24 @@
+
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const fetchBitcoinPrices = async () => {
+  console.log('Fetching Bitcoin portfolio data...');
   const response = await fetch(
     "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=180&interval=daily"
   );
+  
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please wait a moment.');
+    }
+    throw new Error(`Failed to fetch data: ${response.status}`);
+  }
+  
   const data = await response.json();
+  console.log('Bitcoin portfolio data fetched successfully');
   
   // Format data for the chart - take last 6 months
   return data.prices.slice(-180).map(([timestamp, price]: [number, number]) => ({
@@ -15,10 +28,12 @@ const fetchBitcoinPrices = async () => {
 };
 
 const PortfolioCard = () => {
-  const { data: priceData, isLoading } = useQuery({
+  const { data: priceData, isLoading, error } = useQuery({
     queryKey: ['bitcoinPrices'],
     queryFn: fetchBitcoinPrices,
-    refetchInterval: 60000, // Refetch every minute
+    refetchInterval: 300000, // Refetch every 5 minutes instead of 1 minute
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   if (isLoading) {
@@ -27,6 +42,22 @@ const PortfolioCard = () => {
         <h2 className="text-xl font-semibold mb-6">Bitcoin Performance</h2>
         <div className="w-full h-[200px] flex items-center justify-center">
           <span className="text-muted-foreground">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="glass-card p-6 rounded-lg mb-8 animate-fade-in">
+        <h2 className="text-xl font-semibold mb-6">Bitcoin Performance</h2>
+        <div className="w-full h-[200px] flex items-center justify-center">
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error instanceof Error ? error.message : 'Failed to load portfolio data'}
+            </AlertDescription>
+          </Alert>
         </div>
       </div>
     );
